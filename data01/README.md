@@ -98,3 +98,94 @@
 
 * 판다스의 데이터프레임 형태로 반환
 * 보기 편함
+
+
+
+## 시각화
+
+[참고](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html)
+
+### matplotlib
+
+`import matplotlib.pyplot as plt`
+
+* DataFrame.plot(kind=' ', grid = , )...
+  * kind 는 bar, pie, box, scatter 등의 값을 가짐
+  * plot.bar 처럼 사용도 가능
+
+
+
+### scatter
+
+```python
+# scattor 함수 써보기 1
+plt.figure(figsize=(6,6))
+plt.scatter(data_result['인구수'], data_result['소계'], s = 50)
+plt.xlabel('인구수')
+plt.ylabel('CCTV')
+plt.grid()
+```
+
+```python
+# 2
+plt.plot(
+    '인구수',
+    '소계',
+    data = data_result,
+    markersize = 50,
+    linestyle= 'none'
+)
+
+#3
+data_result.plot(x='인구수', y='소계', kind='scatter', grid=True, figsize=(6, 6))
+```
+
+* 위에게 훨씬 편한듯
+* 산점도 그래프???
+  * [산점도 그래프](https://ko.wikipedia.org/wiki/%EC%82%B0%EC%A0%90%EB%8F%84)
+
+
+
+### 데이터 가공(np.polyfit)
+
+* 솔직히 수학적 이야기들은 잘 모르겠음
+* 노이즈가 있는 자료에서 평균 선을 찾는 역할을 한다 함
+* `fp = np.polyfit(data_result['인구수'], data_result['소계'], 1)`
+  * 마지막 1은 찾고자 하는 그래프의 차수
+* `f1 = np.poly1d(fp)`
+  * f1 은 poly1d 의 결과를 함수로 받음
+  * 즉, f1(fp) 처럼 사용해야 plot 의 y값으로 사용할 수 있음
+
+
+
+### 오차 범위에 대한 분석 추가
+
+```python
+data_result['오차'] = np.abs(data_result['소계'] - f1(data_result['인구수']))
+df_sort = data_result.sort_values(by='오차', ascending=False)
+```
+
+* 새 열을 추가해 오차범위가 큰 순서대로 위에서 뽑고자 함
+* `plt.scatter(data_result['인구수'], data_result['소계'], c=data_result['오차'], s = 50)`
+  * c : 뒤의 데이터값을 이용해 오차에 따라 마커의 색상이 변화함
+
+
+
+* `plt.text`
+  * 추가할 텍스트의 x좌표, y좌표, 텍스트 를 값으로 가짐
+
+
+
+* ```python
+  for n in range(10):
+      plt.text(df_sort['인구수'][n], df_sort['소계'][n], df_sort.index[n], fontsize=15)
+  ```
+  * 오차가 큰 곳 10 곳에 마커 추가하기
+  
+  * ```python
+    # cannot convert the series to <class 'float'>
+    for n in range(10):
+        plt.text(df_sort['인구수'][n], df_sort['소계'], df_sort.index[n], fontsize=15)
+    ```
+  
+  * 에러가 났던 코드, 왜 시리즈를 변환하는지 한참 고민했었는데 `df_sort['소계']` 에 인덱스를 주지 않아서 콜럼을 그대로 받아와서 그랬던 것

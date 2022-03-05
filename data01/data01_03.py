@@ -21,3 +21,4 @@ df3 = pd.DataFrame({'A': ['A8', 'A9', 'A10', 'A11'],
 
 # 아무 옵션 없이 사용하면 열 방향으로 쭉 합침
 result = pd.concat([df1, df2, df3])
+print(result)
