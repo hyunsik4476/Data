@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 
-CCTV_Seoul = pd.read_csv('../data/01. CCTV_in_Seoul.csv')
+CCTV_Seoul = pd.read_csv('../../data/01. CCTV_in_Seoul.csv')
 CCTV_Seoul.rename(columns={CCTV_Seoul.columns[0] : '구별'}, inplace=True)
 
 a = CCTV_Seoul.sort_values(by='소계', ascending=True)
@@ -11,7 +11,7 @@ CCTV_Seoul['증가율'] = (CCTV_Seoul['2014년'] + CCTV_Seoul['2015년']
 + CCTV_Seoul['2016년']) / CCTV_Seoul['2013년도 이전'] * 100
 b = CCTV_Seoul.sort_values(by='증가율', ascending=False)
 
-pop_Seoul = pd.read_excel('../data/01. population_in_Seoul.xls', header=2, usecols='B, D, G, J, N')
+pop_Seoul = pd.read_excel('../../data/01. population_in_Seoul.xls', header=2, usecols='B, D, G, J, N')
 pop_Seoul.rename(columns={pop_Seoul.columns[0] : '구별', pop_Seoul.columns[1] : '인구수', pop_Seoul.columns[2] : '한국인', 
 pop_Seoul.columns[3] : '외국인', pop_Seoul.columns[4] : '고령자'}, inplace=True)
 pop_Seoul.drop([0], inplace=True)
