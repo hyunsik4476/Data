@@ -1,11 +1,27 @@
 from calendar import c
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 from pprint import pprint
 # import googlemaps
 # gmaps_key = 
 # gmaps = googlemaps.Client(key=gmaps_key)
 # print(gmaps.geocode('서울중부경찰서', language='ko'))
+
+import platform
+
+path = "c:/Windows/Fonts/malgun.ttf"
+from matplotlib import font_manager, rc
+if platform.system() == 'Darwin':
+    rc('font', family='AppleGothic')
+elif platform.system() == 'Windows':
+    font_name = font_manager.FontProperties(fname=path).get_name()
+    rc('font', family=font_name)
+else:
+    print('Unknown system...') 
 
 # 파일 읽어오기
 crime_anal_police = pd.read_csv('../../data/02. crime_in_Seoul.csv', thousands=',', encoding='euc-kr')
@@ -125,7 +141,7 @@ for name in station_addreess:
 crime_anal_police['구별'] = gu_name
 
 # loc 를 사용해 예외사항 처리해주기
-crime_anal_police.loc[crime_anal_police['관서명']=='금천서', ['구별']] = '금천서'
+crime_anal_police.loc[crime_anal_police['관서명']=='금천서', ['구별']] = '금천구'
 
 # 저장하기
 crime_anal_police.to_csv('./crime_in_Seoul_include_gu_name.csv', sep=',', encoding='utf-8')
@@ -133,4 +149,75 @@ crime_anal_police.to_csv('./crime_in_Seoul_include_gu_name.csv', sep=',', encodi
 # 다시 불러오기
 crime_anal_raw = pd.read_csv('./crime_in_Seoul_include_gu_name.csv', encoding='utf-8')
 
-print(crime_anal_raw)
+# 피봇 테이블 사용하기
+crime_anal = pd.pivot_table(crime_anal_raw, index='구별', aggfunc=np.sum)
+
+crime_anal['강간검거율'] = crime_anal['강간 검거']/crime_anal['강간 발생']*100
+crime_anal['강도검거율'] = crime_anal['강도 검거']/crime_anal['강도 발생']*100
+crime_anal['살인검거율'] = crime_anal['살인 검거']/crime_anal['살인 발생']*100
+crime_anal['절도검거율'] = crime_anal['절도 검거']/crime_anal['절도 발생']*100
+crime_anal['폭력검거율'] = crime_anal['폭력 검거']/crime_anal['폭력 발생']*100
+
+del crime_anal['강간 검거']
+del crime_anal['강도 검거']
+del crime_anal['살인 검거']
+del crime_anal['절도 검거']
+del crime_anal['폭력 검거']
+
+con_list=['강간검거율', '강도검거율', '살인검거율', '절도검거율', '폭력검거율']
+
+# loc 으로 특정 조건을 만족하는 index, column 의 값을 수정하기
+for column in con_list:
+    crime_anal.loc[crime_anal[column]>100, column] = 100
+
+crime_anal.rename(columns={
+    '강간 발생': '강간',
+    '강도 발생': '강도',
+    '살인 발생': '살인',
+    '절도 발생': '절도',
+    '폭력 발생': '폭력'}, inplace=True)
+
+# 사이킷런 전처리(???)
+col = ['강간', '강도', '살인', '절도', '폭력']
+x = crime_anal[col].values      # 각 col 의 값만
+min_max_scaler = MinMaxScaler()
+
+x_scaled = min_max_scaler.fit_transform(x.astype(float))
+crime_anal_norm = pd.DataFrame(x_scaled, columns=col, index = crime_anal.index)
+
+col2 = ['강간검거율', '강도검거율', '살인검거율', '절도검거율', '폭력검거율']
+crime_anal_norm[col2] = crime_anal[col2]
+crime_anal_norm.head()
+
+# 여러 열의 값을 합한 새로운 열 만들기
+result_CCTV = pd.read_csv('../../data/01. CCTV_result.csv', encoding='UTF-8', index_col='구별')
+crime_anal_norm[['인구수', 'CCTV']] = result_CCTV[['인구수', '소계']]
+crime_anal_norm['범죄'] = np.sum(crime_anal_norm[col], axis=1)
+crime_anal_norm['검거'] = np.sum(crime_anal_norm[col2], axis=1)
+
+# sns.pairplot(crime_anal_norm, vars=['강도', '살인', '폭력'], kind='reg', height=3)
+# sns.pairplot(crime_anal_norm, x_vars=['인구수', 'CCTV'], y_vars=['살인검거율','폭력검거율'], kind='reg', height=3)
+
+# 어떤 한 열의 최고값을 100으로 만들기
+tmp_max = crime_anal_norm['검거'].max()
+crime_anal_norm['검거'] = crime_anal_norm['검거']/tmp_max
+crime_anal_norm_sort = crime_anal_norm.sort_values(by='검거', ascending=False)
+
+target_col = ['강간검거율', '강도검거율', '살인검거율', '절도검거율', '폭력검거율', '검거']
+
+crime_anal_norm_sort = crime_anal_norm.sort_values(by='검거', ascending=False)
+
+plt.figure(figsize=(10,10))
+sns.heatmap(crime_anal_norm_sort[target_col], annot=True, fmt='f', linewidths=.5, cmap='BuPu')
+plt.title('범죄의 검거 비율 (정규화된 검거의 합으로 정렬)')
+plt.show()
+
+target_col_2 = ['강간', '강도', '살인', '절도', '폭력', '범죄']
+crime_anal_norm['범죄'] = crime_anal_norm['범죄'] /5
+crime_anal_norm_sort = crime_anal_norm.sort_values(by='범죄', ascending=False)
+plt.figure(figsize=(10,10))
+sns.heatmap(crime_anal_norm_sort[target_col_2], annot=True, fmt='f', linewidths=.5, cmap='BuPu')
+plt.title('범죄 비율 (정규화된 발생 건수로 정렬)')
+plt.show()
+
+crime_anal_norm.to_csv('./02. crime_in_Seoul_final.csv', sep=',', encoding='utf-8')

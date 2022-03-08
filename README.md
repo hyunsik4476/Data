@@ -222,3 +222,33 @@ df_sort = data_result.sort_values(by='오차', ascending=False)
     * np.sum 과 sum은 동일한 결과를 반환하지만 np.sum의 속도가 더 빠르다(???)
   * 
 
+
+
+### 처리하기
+
+* 여러  콜럼의 값을 합하고 싶을 때
+
+  * ```python
+    col = ['a','b','c','d']
+    np.sum(df[col], axis=1)
+    ```
+
+  * 
+
+
+
+## 또다른 시각화
+
+### seaborn
+
+* matplotlib 와 함께 사용
+* seaborn 을 import 할 땐 matplotlib 도 import 되어있어야 함
+* seaborn 을 임포트하면 색상 등을 matplot이 아닌 seaborn의 것을 따름
+* seaborn.boxplot(x='colname1', y='colname2', data=df) 와 같은 형태의 그래프도 가능
+* hue='colname3' 옵션을 통해 박스플롯의 각 막대를 다시 구분하는것도 가능
+* seaborn.heatmap
+  * ![image-20220308231041940](README.assets/image-20220308231041940.png)
+
+* seborn.pairplot(DF, hue='colname')
+  * hue 의 카테고리에 대해 다차원 요소에 대한 그래프를 그려줌
+  * 같은 데이터가 만나는 영역(대각선) 에는 해당 데이터의 히스토그램(도수분포의 그래프형) 을 그림
