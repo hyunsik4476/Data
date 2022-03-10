@@ -4,6 +4,8 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
+import json
+import folium
 
 from pprint import pprint
 # import googlemaps
@@ -221,3 +223,33 @@ plt.title('범죄 비율 (정규화된 발생 건수로 정렬)')
 plt.show()
 
 crime_anal_norm.to_csv('./02. crime_in_Seoul_final.csv', sep=',', encoding='utf-8')
+
+# 지도 시각화
+geo_path = '../../data/02. skorea_municipalities_geo_simple.json'
+geo_str = json.load(open(geo_path, encoding = 'utf-8'))
+
+# 데이터 만들기
+tmp_criminal = crime_anal_norm['범죄'] /  crime_anal_norm['인구수'] * 1000000
+
+crime_anal_raw['lat'] = station_lat
+crime_anal_raw['lng'] = station_lng
+
+col = ['살인 검거', '강도 검거', '강간 검거', '절도 검거', '폭력 검거']
+tmp = crime_anal_raw[col] / crime_anal_raw[col].max()
+crime_anal_raw['검거'] = np.sum(tmp, axis = 1)
+
+
+# 지도 만들기
+map = folium.Map(location=[37.5502, 126.982], zoom_start=11, 
+                 tiles='Stamen Toner')
+
+map.choropleth(geo_data = geo_str,
+               data = tmp_criminal,
+               columns = [crime_anal.index, tmp_criminal],
+               fill_color = 'PuRd', #PuRd, YlGnBu
+               key_on = 'feature.id')
+
+for n in crime_anal_raw.index:
+    folium.CircleMarker([crime_anal_raw['lat'][n], crime_anal_raw['lng'][n]], radius = crime_anal_raw['검거'][n]*10, popup=crime_anal_raw['관서명'][n], color = '#3186cc', fill_color = '#3186cc').add_to(map)
+
+map.save('./map.html')
