@@ -197,3 +197,17 @@
 
 * 이런식으로 차집합 연산을 이용해 두 데이터프레임에서 겹치지 않는 걸 제거할 수 있다
 
+
+
+## 데이터 머지하고 그림으로 표현하기
+
+* ```python
+  pop = pd.merge(pop, draw_korea, how = 'left', on = ['ID'])
+  # 불리언 -> 숫자값
+  pop['소멸위기지역'] = [1 if TF else 0 for TF in pop['소멸위기지역']]
+  ```
+
+* <img src="README.assets/image-20220405205645655.png" alt="image-20220405205645655" style="zoom:30%;" /><img src="README.assets/image-20220405205946998.png" alt="image-20220405205946998" style="zoom:33%;" />
+
+* <img src="README.assets/image-20220405211157670.png" alt="image-20220405211157670" style="zoom:33%;" />
+
