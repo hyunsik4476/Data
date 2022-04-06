@@ -268,5 +268,6 @@ drawKorea2('2030여성비', pop, 'RdBu')
 # 필요없는 열 정리하고 저장
 re_col = list(pop.columns)[:-4] + list(pop.columns)[-1:]
 pop = pop.loc[:, re_col]
+print(pop)
 pop.to_csv('./pop2.csv', sep = ',', encoding = 'UTF-8')
 print(pop)
